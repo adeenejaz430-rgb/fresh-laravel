@@ -205,8 +205,7 @@
                             @php
                                 $stockQty = (int)($product->quantity ?? 0);
                                 $rating = (int)($product->average_rating ?? 0);
-                                $images = is_array($product->images) ? $product->images : [];
-                                $firstImage = $images[0] ?? '/images/placeholder.jpg';
+                                $firstImage = $product->main_image_url; // Use the accessor that properly converts to URL
 
                                 $isWishlisted = false;
                                 if(auth()->check()) {
@@ -221,7 +220,7 @@
                                             src="{{ $firstImage }}"
                                             alt="{{ $product->name }}"
                                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                            onerror="this.onerror=null;this.src='/images/placeholder.jpg';"
+                                            onerror="this.onerror=null;this.src='{{ asset('/flower.png') }}';"
                                         />
                                     </a>
 
