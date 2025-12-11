@@ -1,4 +1,4 @@
-{{-- resources/views/shop/partials/features-section.blade.php --}}
+<!-- {{-- resources/views/shop/partials/features-section.blade.php --}}
 @php
     $features = [
         ['title' => 'Free Shipping',     'description' => 'Free on order over $300'],
@@ -41,4 +41,4 @@
             @endforeach
         </div>
     </div>
-</section>
+</section> -->

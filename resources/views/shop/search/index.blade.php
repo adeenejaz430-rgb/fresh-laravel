@@ -4,7 +4,8 @@
 
 @section('content')
 <div class="bg-gradient-to-br from-slate-50 via-white to-slate-50 min-h-screen">
-    {{-- HERO SECTION --}}
+    {{-- HERO SECTION (Only show when no query - direct visit to /search) --}}
+    @if(!$query)
     <div class="relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 overflow-hidden">
         <div class="absolute inset-0 opacity-10">
             <div class="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
@@ -21,24 +22,13 @@
                 </div>
 
                 <h1 class="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
-                    @if($query)
-                        Results for
-                        <span class="block bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-                            "{{ $query }}"
-                        </span>
-                    @else
-                        <span class="block bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-                            Search Products
-                        </span>
-                    @endif
+                    <span class="block bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
+                        Search Products
+                    </span>
                 </h1>
 
                 <p class="text-xl md:text-2xl text-green-50 mb-8 leading-relaxed max-w-2xl mx-auto">
-                    @if($query)
-                        Found {{ $products->total() }} {{ Str::plural('result', $products->total()) }} for your search
-                    @else
-                        Enter a search term to find products
-                    @endif
+                    Enter a search term to find products
                 </p>
 
                 {{-- SEARCH FORM --}}
@@ -62,6 +52,38 @@
             </div>
         </div>
     </div>
+    @else
+    {{-- COMPACT HEADER FOR SEARCH RESULTS --}}
+    <div class="bg-white border-b border-gray-200 py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                        Search Results for <span class="text-green-600">"{{ $query }}"</span>
+                    </h1>
+                    <p class="text-gray-600">
+                        Found {{ $products->total() }} {{ Str::plural('result', $products->total()) }}
+                    </p>
+                </div>
+                <form method="GET" action="{{ route('search') }}" class="hidden md:flex gap-2">
+                    <input
+                        type="text"
+                        name="q"
+                        value="{{ $query }}"
+                        placeholder="Search again..."
+                        class="px-4 py-2 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-green-500"
+                    />
+                    <button
+                        type="submit"
+                        class="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors text-sm"
+                    >
+                        Search
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
 
     {{-- MAIN CONTENT --}}
     <div class="container mx-auto px-4 py-16">

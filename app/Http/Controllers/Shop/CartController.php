@@ -63,90 +63,106 @@ class CartController extends Controller
      */
     public function add(Request $request, Product $product)
     {
-        $request->validate([
-            'quantity' => 'nullable|integer|min:1',
-        ]);
+        try {
+            $request->validate([
+                'quantity' => 'required|integer|min:1',
+            ]);
 
-        $quantity = $request->input('quantity', 1);
+            $quantity = $request->input('quantity', 1);
 
-        // Check stock
-        if ($product->quantity < $quantity) {
+            // Check stock
+            if ($product->quantity < $quantity) {
+                if ($request->ajax() || $request->expectsJson() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Not enough stock available.'
+                    ], 400);
+                }
+                return back()->with('error', 'Not enough stock available.');
+            }
+
+            // If user is logged in, use database
+            if (auth()->check()) {
+                $user = auth()->user();
+                $existingCartItem = $user->cartProducts()->where('product_id', $product->id)->first();
+                
+                if ($existingCartItem) {
+                    $newQty = $existingCartItem->pivot->quantity + $quantity;
+                    
+                    if ($product->quantity < $newQty) {
+                        if ($request->ajax() || $request->expectsJson() || $request->wantsJson()) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Not enough stock available.'
+                            ], 400);
+                        }
+                        return back()->with('error', 'Not enough stock available.');
+                    }
+                    
+                    $user->cartProducts()->updateExistingPivot($product->id, [
+                        'quantity' => $newQty
+                    ]);
+                } else {
+                    $user->cartProducts()->attach($product->id, [
+                        'quantity' => $quantity
+                    ]);
+                }
+            } else {
+                // Guest users: use session
+                $cart = session()->get('cart', []);
+                
+                if (isset($cart[$product->id])) {
+                    $newQty = $cart[$product->id]['qty'] + $quantity;
+                    
+                    if ($product->quantity < $newQty) {
+                        if ($request->ajax() || $request->expectsJson() || $request->wantsJson()) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Not enough stock available.'
+                            ], 400);
+                        }
+                        return back()->with('error', 'Not enough stock available.');
+                    }
+                    
+                    $cart[$product->id]['qty'] = $newQty;
+                } else {
+                    // Get main image using accessor
+                    $mainImage = $product->main_image_url ?? asset('flower.png');
+                    
+                    $cart[$product->id] = [
+                        'id'    => $product->id,
+                        'name'  => $product->name,
+                        'slug'  => $product->slug,
+                        'price' => $product->price,
+                        'image' => $mainImage,
+                        'qty'   => $quantity,
+                    ];
+                }
+                
+                session()->put('cart', $cart);
+            }
+
+            // Return JSON for AJAX requests
+            if ($request->ajax() || $request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Product added to cart!'
+                ]);
+            }
+
+            return back()->with('success', 'Product added to cart!');
+        } catch (\Exception $e) {
+            \Log::error('Cart add error: ' . $e->getMessage());
+            
             if ($request->ajax() || $request->expectsJson() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Not enough stock available.'
-                ], 400);
-            }
-            return back()->with('error', 'Not enough stock available.');
-        }
-
-        // If user is logged in, use database
-        if (auth()->check()) {
-            $user = auth()->user();
-            $existingCartItem = $user->cartProducts()->where('product_id', $product->id)->first();
-            
-            if ($existingCartItem) {
-                $newQty = $existingCartItem->pivot->quantity + $quantity;
-                
-                if ($product->quantity < $newQty) {
-                    if ($request->ajax() || $request->expectsJson() || $request->wantsJson()) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Not enough stock available.'
-                        ], 400);
-                    }
-                    return back()->with('error', 'Not enough stock available.');
-                }
-                
-                $user->cartProducts()->updateExistingPivot($product->id, [
-                    'quantity' => $newQty
-                ]);
-            } else {
-                $user->cartProducts()->attach($product->id, [
-                    'quantity' => $quantity
-                ]);
-            }
-        } else {
-            // Guest users: use session
-            $cart = session()->get('cart', []);
-            
-            if (isset($cart[$product->id])) {
-                $newQty = $cart[$product->id]['qty'] + $quantity;
-                
-                if ($product->quantity < $newQty) {
-                    if ($request->ajax() || $request->expectsJson() || $request->wantsJson()) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Not enough stock available.'
-                        ], 400);
-                    }
-                    return back()->with('error', 'Not enough stock available.');
-                }
-                
-                $cart[$product->id]['qty'] = $newQty;
-            } else {
-                $cart[$product->id] = [
-                    'id'    => $product->id,
-                    'name'  => $product->name,
-                    'slug'  => $product->slug,
-                    'price' => $product->price,
-                    'image' => $product->images[0] ?? '/flower.png',
-                    'qty'   => $quantity,
-                ];
+                    'message' => 'An error occurred: ' . $e->getMessage()
+                ], 500);
             }
             
-            session()->put('cart', $cart);
+            return back()->with('error', 'An error occurred while adding the product to cart.');
         }
-
-        // Return JSON for AJAX requests
-        if ($request->ajax() || $request->expectsJson() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Product added to cart!'
-            ]);
-        }
-
-        return back()->with('success', 'Product added to cart!');
     }
 
     /**
@@ -349,67 +365,84 @@ class CartController extends Controller
         $count = 0;
         
         if (auth()->check()) {
-            $cartProducts = auth()->user()->cartProducts()->withPivot('quantity')->get();
-            foreach ($cartProducts as $product) {
-                $count += $product->pivot->quantity ?? 0;
-            }
+            $count = auth()->user()->cartProducts()->count();
         } else {
             $cart = session()->get('cart', []);
-            foreach ($cart as $item) {
-                $count += $item['qty'] ?? 0;
-            }
+            $count = count($cart);
         }
         
         return response()->json(['count' => $count]);
     }
 
     /**
-     * Get cart items (for AJAX requests to refresh sidebar)
+     * Get cart items (for AJAX requests)
      */
     public function items(Request $request)
     {
         $cart = [];
-        $subtotal = 0;
         
+        // If logged in, get from database
         if (auth()->check()) {
-            $cartProducts = auth()->user()->cartProducts()->withPivot('quantity')->get();
-            foreach ($cartProducts as $product) {
+            $dbCart = auth()->user()->cartProducts;
+            
+            foreach ($dbCart as $product) {
+                // Get main image using accessor
+                $mainImage = $product->main_image_url ?? asset('flower.png');
+                
                 $cart[] = [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'slug' => $product->slug,
+                    'id'    => $product->id,
+                    'name'  => $product->name,
+                    'slug'  => $product->slug,
                     'price' => (float) $product->price,
-                    'image' => $product->main_image_url ?? asset('/flower.png'),
-                    'qty' => $product->pivot->quantity ?? 1,
+                    'image' => $mainImage,
+                    'qty'   => (int) $product->pivot->quantity,
                 ];
-                $subtotal += $product->price * ($product->pivot->quantity ?? 1);
             }
         } else {
+            // Guest: use session
             $sessionCart = session()->get('cart', []);
             foreach ($sessionCart as $id => $item) {
                 $cart[] = [
-                    'id' => $item['id'] ?? $id,
-                    'name' => $item['name'] ?? '',
-                    'slug' => $item['slug'] ?? '',
-                    'price' => (float) ($item['price'] ?? 0),
-                    'image' => $item['image'] ?? asset('/flower.png'),
-                    'qty' => $item['qty'] ?? 1,
+                    'id'    => isset($item['id']) ? (int) $item['id'] : (int) $id,
+                    'name'  => $item['name'] ?? '',
+                    'slug'  => $item['slug'] ?? '',
+                    'price' => isset($item['price']) ? (float) $item['price'] : 0,
+                    'image' => $item['image'] ?? asset('flower.png'),
+                    'qty'   => isset($item['qty']) ? (int) $item['qty'] : 1,
                 ];
-                $subtotal += ($item['price'] ?? 0) * ($item['qty'] ?? 1);
             }
         }
         
-        $shipping = $subtotal >= 50 ? 0 : 10;
-        $tax = $subtotal * 0.10;
+        // Calculate totals
+        $subtotal = 0;
+        foreach ($cart as $item) {
+            $subtotal += $item['price'] * $item['qty'];
+        }
+        
+        $shipping = $subtotal > 50 ? 0 : 10; // Free shipping over $50
+        $tax = $subtotal * 0.10; // 10% tax
         $total = $subtotal + $shipping + $tax;
+        $count = count($cart);
+        
+        // Always return JSON for AJAX requests
+        if ($request->ajax() || $request->expectsJson() || $request->wantsJson()) {
+            return response()->json([
+                'cart' => array_values($cart), // Ensure it's a numeric array
+                'count' => $count,
+                'subtotal' => round($subtotal, 2),
+                'shipping' => round($shipping, 2),
+                'tax' => round($tax, 2),
+                'total' => round($total, 2),
+            ]);
+        }
         
         return response()->json([
-            'cart' => $cart,
-            'subtotal' => $subtotal,
-            'shipping' => $shipping,
-            'tax' => $tax,
-            'total' => $total,
-            'count' => count($cart)
+            'cart' => array_values($cart),
+            'count' => $count,
+            'subtotal' => round($subtotal, 2),
+            'shipping' => round($shipping, 2),
+            'tax' => round($tax, 2),
+            'total' => round($total, 2),
         ]);
     }
 }

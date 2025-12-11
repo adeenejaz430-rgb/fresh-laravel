@@ -398,17 +398,13 @@
                         // Show toast notification
                         showToast(`${productName} added to cart!`, 'success');
                         
-                        // Refresh cart sidebar if it exists
-                        if (typeof refreshCartSidebar === 'function') {
-                            refreshCartSidebar();
-                        }
-                        
-                        // Open cart sidebar after delay
+                        // Small delay to ensure server has processed the cart update
                         setTimeout(() => {
+                            // Open cart sidebar - it will refresh the cart content internally before opening
                             if (typeof openCartSidebar === 'function') {
                                 openCartSidebar();
                             }
-                        }, 500);
+                        }, 100);
                         
                         // Reset button after 2 seconds
                         setTimeout(() => {

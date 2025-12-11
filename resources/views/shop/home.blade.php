@@ -38,7 +38,7 @@
             
             <div class="hero-slide-item absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out" data-index="2" style="opacity: 0; z-index: 0;">
                 <img 
-                    src="{{ asset('storage/products/hs3.jpg') }}" 
+                    src="{{ asset('storage/products/hs5.jpg') }}" 
                     alt="Stylish Home Accessories"
                     class="w-full h-full object-cover"
                     style="width: 100%; height: 100%; object-fit: cover; object-position: center;"
@@ -76,19 +76,48 @@
                 <button class="hero-dot w-2.5 h-2.5 rounded-full bg-white/50 hover:bg-white/80 transition-all duration-300 hover:scale-125" data-dot="2" aria-label="Slide 3"></button>
             </div>
 
-            {{-- Content Container - Centered Text --}}
+            {{-- Content Container - Centered Text with Per-Slide Captions --}}
             <div class="relative z-20 container mx-auto px-4 md:px-6 lg:px-8 h-full">
                 <div class="flex flex-col items-center justify-center h-full">
                     <div class="w-full max-w-4xl text-center">
-                        <h1 class="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif text-white mb-6 leading-tight">
-                            A Season of Style:<br>
-                            <span class="font-normal">Discover Our Premium Collection</span>
-                        </h1>
-                        
-                        <a href="{{ route('products.index') }}"
-                           class="inline-block mt-8 px-8 py-3 bg-white text-gray-900 font-semibold uppercase tracking-wide text-sm hover:bg-gray-100 transition-all duration-300 border border-gray-300">
-                            Shop Now
-                        </a>
+                        {{-- Slide 1 Caption --}}
+                        <div class="hero-caption absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-700 ease-in-out" data-caption="0" style="opacity: 1;">
+                            <h1 class="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-cinzel text-white mb-6 leading-tight">
+                                A Season of Style:<br>
+                                <span class="font-normal">Discover Our Premium Collection</span>
+                            </h1>
+                            
+                            <a href="{{ route('products.index') }}"
+                               class="inline-block mt-8 px-8 py-3 bg-white text-gray-900 font-cinzel font-semibold uppercase tracking-wide text-sm hover:bg-gray-100 transition-all duration-300 border border-gray-300">
+                                Shop Now
+                            </a>
+                        </div>
+
+                        {{-- Slide 2 Caption --}}
+                        <div class="hero-caption absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-700 ease-in-out" data-caption="1" style="opacity: 0;">
+                            <h1 class="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-cinzel text-white mb-6 leading-tight">
+                                Elegant Artificial Flowers:<br>
+                                <span class="font-normal">Transform Your Space with Beauty</span>
+                            </h1>
+                            
+                            <a href="{{ route('products.index') }}?category=flowers"
+                               class="inline-block mt-8 px-8 py-3 bg-white text-gray-900 font-cinzel font-semibold uppercase tracking-wide text-sm hover:bg-gray-100 transition-all duration-300 border border-gray-300">
+                                Explore Flowers
+                            </a>
+                        </div>
+
+                        {{-- Slide 3 Caption --}}
+                        <div class="hero-caption absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-700 ease-in-out" data-caption="2" style="opacity: 0;">
+                            <h1 class="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-cinzel text-white mb-6 leading-tight">
+                                Premium Home Decor:<br>
+                                <span class="font-normal">Vases, Plants & Water Fountains</span>
+                            </h1>
+                            
+                            <a href="{{ route('products.index') }}"
+                               class="inline-block mt-8 px-8 py-3 bg-white text-gray-900 font-cinzel font-semibold uppercase tracking-wide text-sm hover:bg-gray-100 transition-all duration-300 border border-gray-300">
+                                View Collection
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -127,6 +156,18 @@
                     } else {
                         slide.style.opacity = '0';
                         slide.style.zIndex = '0';
+                    }
+                });
+                
+                // Update captions
+                const captions = document.querySelectorAll('.hero-caption');
+                captions.forEach((caption, i) => {
+                    if (i === currentSlide) {
+                        caption.style.opacity = '1';
+                        caption.style.zIndex = '2';
+                    } else {
+                        caption.style.opacity = '0';
+                        caption.style.zIndex = '1';
                     }
                 });
                 
@@ -252,9 +293,6 @@
 
     {{-- FEATURED PRODUCTS --}}
     @include('shop.partials.featured-products')
-    
-    {{-- FEATURES SECTION --}}
-    @includeIf('shop.partials.features-section')
 
     {{-- MIDDLE SECTIONS FROM YOUR DESIGN (only render if they exist) --}}
     @includeIf('shop.partials.section-mid')
@@ -525,5 +563,8 @@
 
     {{-- PROMO CARDS / COLLECTIONS --}}
     @includeIf('shop.partials.promo-cards-section')
+
+    {{-- FEATURES SECTION - Moved to bottom above footer --}}
+    @includeIf('shop.partials.features-section')
 </div>
 @endsection

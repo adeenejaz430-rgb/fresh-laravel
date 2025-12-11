@@ -43,23 +43,30 @@
                             {{ $product->description ?? 'Beautiful and high-quality product for your daily use.' }}
                         </p>
 
-                        <div class="flex items-center justify-between mt-auto">
-                            <div class="text-2xl font-bold text-gray-800">
-                                ${{ number_format($product->price, 2) }}
+                        <div class="flex items-center justify-between mt-auto pt-4 border-t-2 border-gray-100">
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">Price</p>
+                                <span class="text-2xl font-black bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                                    ${{ number_format($product->price, 2) }}
+                                </span>
                             </div>
-                            <form
-                                method="POST"
-                                action="{{ route('cart.add', $product->id) }}"
-                                onclick="event.stopPropagation();"
-                            >
+
+                            <form class="add-to-cart-form" data-product-id="{{ $product->id }}" data-product-name="{{ $product->name }}" onclick="event.stopPropagation();">
                                 @csrf
+                                <input type="hidden" name="quantity" value="1">
                                 <button
                                     type="submit"
                                     @if($stockQty === 0) disabled @endif
-                                    class="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium px-5 py-2.5 rounded-full transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                    class="add-cart-btn group/btn px-5 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105
+                                        {{ $stockQty === 0 
+                                            ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                                            : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white' 
+                                        }}"
                                 >
-                                    🛒
-                                    {{ $stockQty === 0 ? 'Out of Stock' : 'Add to cart' }}
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                    {{ $stockQty === 0 ? 'Out of Stock' : 'Add to Cart' }}
                                 </button>
                             </form>
                         </div>

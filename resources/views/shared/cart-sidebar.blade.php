@@ -220,21 +220,29 @@ const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
 
 // Function to refresh cart sidebar content
 function refreshCartSidebar() {
-    fetch('/cart/items', {
+    return fetch('/cart/items', {
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'Accept': 'application/json'
         },
         credentials: 'same-origin'
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to fetch cart items');
+        }
+        return response.json();
+    })
     .then(data => {
-        const cart = data.cart || [];
-        const cartCount = data.count || 0;
+        // Ensure cart is an array
+        const cart = Array.isArray(data.cart) ? data.cart : Object.values(data.cart || {});
+        const cartCount = data.count || cart.length || 0;
         const subtotal = data.subtotal || 0;
         const shipping = data.shipping || 0;
         const tax = data.tax || 0;
         const total = data.total || 0;
+        
+        console.log('Cart refresh data:', { cart, cartCount, subtotal, total });
         
         // Update cart count in sidebar header
         const cartItemCountEl = document.getElementById('cartItemCount');
@@ -245,7 +253,12 @@ function refreshCartSidebar() {
         const container = document.getElementById('cartItemsContainer');
         const footer = document.getElementById('cartFooter');
         
-        if (cartCount === 0) {
+        if (!container) {
+            console.error('Cart items container not found');
+            return;
+        }
+        
+        if (cartCount === 0 || cart.length === 0) {
             // Show empty state
             showEmptyCartState();
         } else {
@@ -356,6 +369,7 @@ function refreshCartSidebar() {
     })
     .catch(error => {
         console.error('Error refreshing cart:', error);
+        throw error; // Re-throw so caller knows it failed
     });
 }
 
@@ -368,19 +382,29 @@ function openCartSidebar() {
         return;
     }
     
-    // Refresh cart content before opening (if sidebar is already open, refresh it)
+    // If sidebar is already open, just refresh it
     if (sidebar.classList.contains('show')) {
         refreshCartSidebar();
         return;
     }
     
+    // Show sidebar first (hidden state)
     sidebar.classList.remove('hidden');
     document.body.classList.add('cart-open');
     
-    // Trigger animation
-    setTimeout(() => {
-        sidebar.classList.add('show');
-    }, 10);
+    // Always refresh cart content before showing it
+    refreshCartSidebar().then(() => {
+        // Trigger animation after content is loaded
+        setTimeout(() => {
+            sidebar.classList.add('show');
+        }, 50);
+    }).catch((error) => {
+        console.error('Error refreshing cart sidebar:', error);
+        // Even if refresh fails, still show the sidebar
+        setTimeout(() => {
+            sidebar.classList.add('show');
+        }, 50);
+    });
 }
 
 function closeCartSidebar() {
