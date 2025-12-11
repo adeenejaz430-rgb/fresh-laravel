@@ -20,21 +20,10 @@
 
 <header class="fixed top-0 left-0 right-0 w-full z-50 bg-white border-b border-gray-200 shadow-sm" style="height: 80px;">
     <div class="container mx-auto px-4 lg:px-8 h-full">
-        <div class="flex items-center justify-between h-full relative">
+        <div class="flex items-center justify-between h-full">
             
-            {{-- LEFT: Search Icon --}}
+            {{-- LEFT: Logo --}}
             <div class="flex items-center">
-                <a href="{{ route('products.index') }}" 
-                   class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
-                   aria-label="Search">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </a>
-            </div>
-
-            {{-- CENTER: Logo --}}
-            <div class="absolute left-1/2 transform -translate-x-1/2">
                 <a href="{{ route('shop.home') }}" class="flex items-center">
                     <div class="relative h-12 w-auto">
                         <img src="/logo.png" alt="Logo" class="h-full w-auto object-contain">
@@ -42,7 +31,7 @@
                 </a>
             </div>
 
-            {{-- RIGHT: Menu Items + Icons --}}
+            {{-- CENTER/RIGHT: Menu Items + Search + Icons --}}
             <div class="flex items-center gap-6">
                 {{-- DESKTOP NAV MENU --}}
                 <nav class="hidden lg:flex items-center gap-6">
@@ -55,11 +44,13 @@
                         @endphp
 
                         <a href="{{ $href }}"
-                           class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors relative
+                           class="text-base font-semibold text-gray-700 hover:text-gray-900 transition-colors relative pb-1 group
                                   {{ $active ? 'text-gray-900' : '' }}">
                             {{ $link['name'] }}
                             @if($active)
-                                <span class="absolute -bottom-1 left-0 right-0 h-0.5 bg-gray-900"></span>
+                                <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></span>
+                            @else
+                                <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                             @endif
                         </a>
                     @endforeach
@@ -67,12 +58,13 @@
                     {{-- CATEGORIES DROPDOWN --}}
                     @if(count($categoriesList))
                         <div class="relative" id="categoriesDropdown">
-                            <button class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-1 group">
+                            <button class="text-base font-semibold text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-1 group relative pb-1">
                                 Categories
                                 <svg class="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" 
                                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                 </svg>
+                                <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                             </button>
 
                             <div
@@ -101,6 +93,15 @@
                             </div>
                         </div>
                     @endif
+
+                    {{-- SEARCH ICON (After Categories) --}}
+                    <a href="{{ route('search') }}" 
+                       class="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
+                       aria-label="Search">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </a>
                 </nav>
 
                 {{-- RIGHT ICONS: Cart, Wishlist, User --}}
@@ -237,7 +238,7 @@
                 @endphp
                 
                 <a href="{{ $href }}"
-                   class="block px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg
+                   class="block px-4 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50 rounded-lg
                           {{ $active ? 'bg-gray-100 text-gray-900' : '' }}">
                     {{ $link['name'] }}
                 </a>
@@ -258,6 +259,17 @@
                     @endforeach
                 </div>
             @endif
+
+            {{-- SEARCH IN MOBILE MENU --}}
+            <div class="pt-4 border-t border-gray-200 mt-4">
+                <a href="{{ route('search') }}"
+                   class="flex items-center gap-3 px-4 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <span>Search</span>
+                </a>
+            </div>
         </div>
     </div>
 </div>
